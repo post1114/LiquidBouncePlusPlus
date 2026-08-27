@@ -224,7 +224,7 @@ public abstract class Panel extends MinecraftInstance {
         return dragged;
     }
 
-    public int getElementsHeight() {
+    private int getElementsHeight() {
         int height = 0;
         int count = 0;
         for(final Element element : elements) {
