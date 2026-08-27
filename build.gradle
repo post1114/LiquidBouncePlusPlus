@@ -65,11 +65,6 @@ dependencies {
     compile 'com.jagrosh:DiscordIPC:0.4'
     include "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    implementation 'com.github.TheAltening:TheAltening4j:master-SNAPSHOT'
-    implementation 'com.github.TheAltening:TheAlteningAuth4j:-SNAPSHOT'
-    compile 'com.github.TheAltening:TheAltening4j:api-2.0-SNAPSHOT'
-    compile 'com.github.TheAltening:TheAlteningAuth4j:-SNAPSHOT'
-
     implementation 'com.github.ben-manes.caffeine:caffeine:2.9.0'
     compile 'com.github.ben-manes.caffeine:caffeine:2.9.0'
 
@@ -91,8 +86,6 @@ shadowJar {
         include(dependency('org.yaml:snakeyaml'))
         include(dependency('org.jetbrains.kotlin:kotlin-stdlib'))
 
-        include(dependency('com.github.TheAltening:TheAltening4j'))
-        include(dependency('com.github.TheAltening:TheAlteningAuth4j'))
         include(dependency('com.github.ben-manes.caffeine:caffeine'))
 
         include(dependency('com.github.half-cambodian-hacker-man:Koffee'))
