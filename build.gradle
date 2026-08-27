@@ -9,10 +9,10 @@ plugins {
 
 repositories {
     mavenLocal()
-    mavenCentral()
+    maven { url = "https://jitpack.io/" }
     maven { url = "https://maven.minecraftforge.net/" }
     maven { url = "https://repo.spongepowered.org/repository/maven-public/" }
-    maven { url = "https://jitpack.io/" }
+    mavenCentral()
 }
 
 version = "plus"
