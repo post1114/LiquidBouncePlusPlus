@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-11-arm
 
     steps:
     - name: Checkout code
@@ -22,14 +22,11 @@ jobs:
         java-version: '8'
         distribution: 'temurin'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-
     - name: Build with Gradle
-      run: ./gradlew build
+      run: .\gradlew.bat build
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3
       with:
         name: build-artifact
-        path: build/libs/
+        path: build\libs\
