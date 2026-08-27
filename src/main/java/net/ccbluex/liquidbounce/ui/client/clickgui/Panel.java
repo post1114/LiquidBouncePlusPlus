@@ -224,6 +224,65 @@ public abstract class Panel extends MinecraftInstance {
         return dragged;
     }
 
+    public int parseX() {
+        return parseX(x);
+    }
+
+    public int parseX(int value) {
+        final ClickGUI clickGUI = (ClickGUI) Objects.requireNonNull(LiquidBounce.moduleManager.getModule(ClickGUI.class));
+        if (!clickGUI.panelsForcedInBoundariesValue.get())
+            return value;
+
+        int settingsWidth = 0;
+        if (open) {
+            for (Element element : elements) {
+                if (element instanceof ModuleElement) {
+                    ModuleElement moduleElement = (ModuleElement) element;
+                    if (moduleElement.showSettings) {
+                        settingsWidth = Math.max(settingsWidth, moduleElement.settingsWidth);
+                    }
+                }
+            }
+        }
+
+        net.minecraft.client.gui.ScaledResolution sr = new net.minecraft.client.gui.ScaledResolution(mc);
+        double scale = clickGUI.scaleValue.get();
+        return Math.max(0, Math.min(value, (int) (sr.getScaledWidth() / scale - width - settingsWidth)));
+    }
+
+    public int parseY() {
+        return parseY(y);
+    }
+
+    public int parseY(int value) {
+        final ClickGUI clickGUI = (ClickGUI) Objects.requireNonNull(LiquidBounce.moduleManager.getModule(ClickGUI.class));
+        if (!clickGUI.panelsForcedInBoundariesValue.get())
+            return value;
+
+        int panelHeight = height + (int) fade;
+        if (open) {
+            int yPos = height + 4;
+            for (Element element : elements) {
+                if (element.isVisible()) {
+                    if (element instanceof ModuleElement) {
+                        ModuleElement moduleElement = (ModuleElement) element;
+                        if (moduleElement.showSettings && moduleElement.settingsHeight != 0) {
+                            int relativeSettingsHeight = yPos + moduleElement.settingsHeight;
+                            if (relativeSettingsHeight > panelHeight) {
+                                panelHeight = relativeSettingsHeight;
+                            }
+                        }
+                    }
+                    yPos += element.getHeight() + 1;
+                }
+            }
+        }
+
+        net.minecraft.client.gui.ScaledResolution sr = new net.minecraft.client.gui.ScaledResolution(mc);
+        double scale = clickGUI.scaleValue.get();
+        return Math.max(0, Math.min(value, (int) (sr.getScaledHeight() / scale - panelHeight)));
+    }
+
     private int getElementsHeight() {
         int height = 0;
         int count = 0;

@@ -43,6 +43,7 @@ public class ClickGui extends GuiScreen {
     private Panel clickedPanel;
     private int mouseX;
     private int mouseY;
+    private Integer autoScrollY;
 
     public double slide, progress = 0;
 
@@ -302,11 +303,21 @@ public class ClickGui extends GuiScreen {
         }
 
         if (Mouse.hasWheel()) {
-            int wheel = Mouse.getDWheel();
+            int wheel = autoScrollY != null ? autoScrollY - mouseY : Mouse.getDWheel();
 
-            for (int i = panels.size() - 1; i >= 0; i--)
-                if (panels.get(i).handleScroll(mouseX, mouseY, wheel))
-                    break;
+            if (wheel != 0) {
+                boolean handledScroll = false;
+
+                // Handle foremost panel.
+                for (int i = panels.size() - 1; i >= 0; i--) {
+                    if (panels.get(i).handleScroll(mouseX, mouseY, wheel)) {
+                        handledScroll = true;
+                        break;
+                    }
+                }
+
+                if (!handledScroll) handleScroll(wheel);
+            }
         }
 
         GlStateManager.disableLighting();
@@ -341,6 +352,10 @@ public class ClickGui extends GuiScreen {
         mouseX /= scale;
         mouseY /= scale;
 
+        if (mouseButton == 2) {
+            autoScrollY = mouseY;
+        }
+
         for (final Panel panel : panels) {
             panel.mouseClicked(mouseX, mouseY, mouseButton);
 
@@ -369,6 +384,10 @@ public class ClickGui extends GuiScreen {
 
         mouseX /= scale;
         mouseY /= scale;
+
+        if (state == 2) {
+            autoScrollY = null;
+        }
 
         for (Panel panel : panels) {
             panel.mouseReleased(mouseX, mouseY, state);
@@ -410,7 +429,27 @@ public class ClickGui extends GuiScreen {
 
     @Override
     public void onGuiClosed() {
+        autoScrollY = null;
         LiquidBounce.fileManager.saveConfig(LiquidBounce.fileManager.clickGuiConfig);
+    }
+
+    private void handleScroll(int wheel) {
+        final ClickGUI clickGUI = (ClickGUI) Objects.requireNonNull(LiquidBounce.moduleManager.getModule(ClickGUI.class));
+
+        if (org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_LCONTROL)) {
+            double scale = clickGUI.scaleValue.get();
+            scale += wheel * 0.0001f;
+            clickGUI.scaleValue.set((float) scale);
+
+            for (Panel panel : panels) {
+                panel.x = panel.parseX();
+                panel.y = panel.parseY();
+            }
+        } else if (clickGUI.scrollsValue.get()) {
+            for (Panel panel : panels) {
+                panel.y = panel.parseY(panel.y + wheel / 10);
+            }
+        }
     }
 
     @Override

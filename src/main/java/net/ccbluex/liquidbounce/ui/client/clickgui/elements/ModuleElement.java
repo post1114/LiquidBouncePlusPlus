@@ -20,6 +20,7 @@ public class ModuleElement extends ButtonElement {
 
     private boolean showSettings;
     private float settingsWidth = 0F;
+    public int settingsHeight = 0;
     private boolean wasPressed;
 
     public int slowlySettingsYPos;
