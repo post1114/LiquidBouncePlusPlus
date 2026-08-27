@@ -440,14 +440,9 @@ public class ClickGui extends GuiScreen {
             double scale = clickGUI.scaleValue.get();
             scale += wheel * 0.0001f;
             clickGUI.scaleValue.set((float) scale);
-
-            for (Panel panel : panels) {
-                panel.x = panel.parseX();
-                panel.y = panel.parseY();
-            }
         } else if (clickGUI.scrollsValue.get()) {
             for (Panel panel : panels) {
-                panel.y = panel.parseY(panel.y + wheel / 10);
+                panel.y += wheel / 10;
             }
         }
     }
