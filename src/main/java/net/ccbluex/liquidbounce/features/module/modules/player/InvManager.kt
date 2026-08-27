@@ -71,6 +71,8 @@ class InvManager : Module() {
     private val itemDelayValue = IntegerValue("ItemDelay", 0, 0, 5000, "ms")
     private val ignoreVehiclesValue = BoolValue("IgnoreVehicles", false)
     private val onlyPositivePotionValue = BoolValue("OnlyPositivePotion", false)
+    private val limitPotionAmountValue = IntegerValue("LimitPotionAmount", 0, 0, 64)
+    private val limitBlockAmountValue = IntegerValue("LimitBlockAmount", 0, 0, 64)
 
     // NBT
     private val nbtGoalValue = ListValue("NBTGoal", ItemHelper.EnumNBTPriorityType.values().map { it.toString() }.toTypedArray(), "NONE")
@@ -364,6 +366,23 @@ class InvManager : Module() {
             } else if (itemStack.unlocalizedName == "item.compass") {
                 items(0, 45).none { (_, stack) -> itemStack != stack && stack.unlocalizedName == "item.compass" }
             } else {
+                // Potion amount limit
+                if (item is ItemPotion && limitPotionAmountValue.get() > 0) {
+                    val totalPotions = items(9, 45).values.count { it.item is ItemPotion }
+                    if (totalPotions > limitPotionAmountValue.get() && slot >= 9) {
+                        return false
+                    }
+                }
+
+                // Block amount limit (in units of 64)
+                if (item is ItemBlock && !InventoryHelper.isBlockListBlock(item) && limitBlockAmountValue.get() > 0) {
+                    val totalBlocks = items(9, 45).values.filter { it.item is ItemBlock && !InventoryHelper.isBlockListBlock(it.item as ItemBlock) }.sumBy { it.stackSize }
+                    val limit = limitBlockAmountValue.get() * 64
+                    if (totalBlocks > limit && slot >= 9) {
+                        return false
+                    }
+                }
+
                 (nbtItemNotGarbage.get() && ItemHelper.hasNBTGoal(itemStack, goal)) ||
                         item is ItemFood || itemStack.unlocalizedName == "item.arrow" ||
                         (item is ItemBlock && !InventoryHelper.isBlockListBlock(item)) ||
