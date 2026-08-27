@@ -128,22 +128,25 @@ public abstract class Panel extends MinecraftInstance {
     public boolean handleScroll(int mouseX, int mouseY, int wheel) {
         final int maxElements = ((ClickGUI) Objects.requireNonNull(LiquidBounce.moduleManager.getModule(ClickGUI.class))).maxElementsValue.get();
 
-        if(mouseX >= getX() && mouseX <= getX() + 100 && mouseY >= getY() && mouseY <= getY() + 19 + elementsHeight) {
+        if(mouseX >= getX() && mouseX <= getX() + 100 && mouseY >= getY() && mouseY <= getY() + 19 + elementsHeight + 20) {
             if(wheel < 0 && scroll < elements.size() - maxElements) {
-                ++scroll;
-                if(scroll < 0)
-                    scroll = 0;
+                scroll += 3;
+                if(scroll > elements.size() - maxElements)
+                    scroll = elements.size() - maxElements;
             }else if(wheel > 0) {
-                --scroll;
+                scroll -= 3;
                 if(scroll < 0)
                     scroll = 0;
             }
 
             if(wheel < 0) {
-                if(dragged < elements.size() - maxElements)
-                    ++dragged;
-            }else if(wheel > 0 && dragged >= 1) {
-                --dragged;
+                dragged += 3;
+                if(dragged > elements.size() - maxElements)
+                    dragged = elements.size() - maxElements;
+            }else if(wheel > 0) {
+                dragged -= 3;
+                if(dragged < 0)
+                    dragged = 0;
             }
 
             return true;
