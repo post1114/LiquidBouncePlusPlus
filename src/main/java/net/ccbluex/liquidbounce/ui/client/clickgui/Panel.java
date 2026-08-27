@@ -8,6 +8,7 @@ package net.ccbluex.liquidbounce.ui.client.clickgui;
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.features.module.modules.render.ClickGUI;
 import net.ccbluex.liquidbounce.ui.client.clickgui.elements.Element;
+import net.ccbluex.liquidbounce.ui.client.clickgui.elements.ModuleElement;
 import net.ccbluex.liquidbounce.utils.MinecraftInstance;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;
@@ -238,8 +239,8 @@ public abstract class Panel extends MinecraftInstance {
             for (Element element : elements) {
                 if (element instanceof ModuleElement) {
                     ModuleElement moduleElement = (ModuleElement) element;
-                    if (moduleElement.showSettings) {
-                        settingsWidth = Math.max(settingsWidth, moduleElement.settingsWidth);
+                    if (moduleElement.isShowSettings()) {
+                        settingsWidth = Math.max(settingsWidth, (int) moduleElement.getSettingsWidth());
                     }
                 }
             }
@@ -266,7 +267,7 @@ public abstract class Panel extends MinecraftInstance {
                 if (element.isVisible()) {
                     if (element instanceof ModuleElement) {
                         ModuleElement moduleElement = (ModuleElement) element;
-                        if (moduleElement.showSettings && moduleElement.settingsHeight != 0) {
+                        if (moduleElement.isShowSettings() && moduleElement.settingsHeight != 0) {
                             int relativeSettingsHeight = yPos + moduleElement.settingsHeight;
                             if (relativeSettingsHeight > panelHeight) {
                                 panelHeight = relativeSettingsHeight;
