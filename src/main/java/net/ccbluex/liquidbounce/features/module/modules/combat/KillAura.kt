@@ -124,7 +124,7 @@ class KillAura : Module() {
     private val keepSprintValue = BoolValue("KeepSprint", true)
 
     // AutoBlock
-    private val autoBlockModeValue = ListValue("AutoBlock", arrayOf("None", "Packet", "AfterTick", "NCP", "OldHypixel"), "None")
+    private val autoBlockModeValue = ListValue("AutoBlock", arrayOf("None", "Packet", "AfterTick", "NCP", "OldHypixel", "UpdatedNCP"), "None")
 
     private val displayAutoBlockSettings = BoolValue("Open-AutoBlock-Settings", false, { !autoBlockModeValue.get().equals("None", true) })
     private val interactAutoBlockValue = BoolValue("InteractAutoBlock", true, { !autoBlockModeValue.get().equals("None", true) && displayAutoBlockSettings.get() })
@@ -140,6 +140,10 @@ class KillAura : Module() {
 
     private val afterTickPatchValue = BoolValue("AfterTickPatch", true, { autoBlockModeValue.get().equals("AfterTick", true) && displayAutoBlockSettings.get() })
     private val blockRate = IntegerValue("BlockRate", 100, 1, 100, "%", { !autoBlockModeValue.get().equals("None", true) && displayAutoBlockSettings.get() })
+
+    // UpdatedNCP AutoBlock
+    private val uncpSwitchSlot = BoolValue("UpdatedNCP-SwitchSlot", true, { autoBlockModeValue.get().equals("UpdatedNCP", true) })
+    private val uncpInteract = BoolValue("UpdatedNCP-Interact", true, { autoBlockModeValue.get().equals("UpdatedNCP", true) })
 
     // Raycast
     private val raycastValue = BoolValue("RayCast", true)
@@ -420,6 +424,13 @@ class KillAura : Module() {
 
         if (packet is C09PacketHeldItemChange)
             verusBlocking = false
+
+        // UpdatedNCP AutoBlock - intercept C07/C08 packets to prevent release
+        if (autoBlockModeValue.get().equals("UpdatedNCP", true) && blockingStatus) {
+            if (packet is C07PacketPlayerDigging && packet.getStatus() == C07PacketPlayerDigging.Action.RELEASE_USE_ITEM) {
+                event.cancelEvent()
+            }
+        }
     }
 
     /**
@@ -937,6 +948,42 @@ class KillAura : Module() {
             return
         }
 
+        // UpdatedNCP AutoBlock
+        if (autoBlockModeValue.get().equals("UpdatedNCP", true)) {
+            if (uncpSwitchSlot.get()) {
+                val currentItem = mc.thePlayer.inventory.currentItem
+                mc.thePlayer.inventory.currentItem = (currentItem + 1) % 9
+                mc.thePlayer.inventory.currentItem = currentItem
+            }
+
+            if (uncpInteract.get()) {
+                val positionEye = mc.renderViewEntity?.getPositionEyes(1F)
+                val expandSize = interactEntity.collisionBorderSize.toDouble()
+                val boundingBox = interactEntity.entityBoundingBox.expand(expandSize, expandSize, expandSize)
+                val (yaw, pitch) = RotationUtils.targetRotation ?: Rotation(mc.thePlayer!!.rotationYaw, mc.thePlayer!!.rotationPitch)
+                val yawCos = cos(-yaw * 0.017453292F - Math.PI.toFloat())
+                val yawSin = sin(-yaw * 0.017453292F - Math.PI.toFloat())
+                val pitchCos = -cos(-pitch * 0.017453292F)
+                val pitchSin = sin(-pitch * 0.017453292F)
+                val range = min(maxRange.toDouble(), mc.thePlayer!!.getDistanceToEntityBox(interactEntity)) + 1
+                val lookAt = positionEye!!.addVector(yawSin * pitchCos * range, pitchSin * range, yawCos * pitchCos * range)
+                val movingObject = boundingBox.calculateIntercept(positionEye, lookAt)
+                if (movingObject != null) {
+                    val hitVec = movingObject.hitVec
+                    mc.netHandler.addToSendQueue(C02PacketUseEntity(interactEntity, Vec3(
+                        hitVec.xCoord - interactEntity.posX,
+                        hitVec.yCoord - interactEntity.posY,
+                        hitVec.zCoord - interactEntity.posZ)
+                    ))
+                    mc.netHandler.addToSendQueue(C02PacketUseEntity(interactEntity, C02PacketUseEntity.Action.INTERACT))
+                }
+            }
+
+            mc.netHandler.addToSendQueue(C08PacketPlayerBlockPlacement(BlockPos.ORIGIN, 255, mc.thePlayer.inventory.getCurrentItem(), 0.0f, 0.0f, 0.0f))
+            blockingStatus = true
+            return
+        }
+
         if (interact) {
             //mc.netHandler.addToSendQueue(C02PacketUseEntity(interactEntity, interactEntity.positionVector))
             val positionEye = mc.renderViewEntity?.getPositionEyes(1F)
@@ -976,6 +1023,14 @@ class KillAura : Module() {
         if (blockingStatus) {
             if (autoBlockModeValue.get().equals("oldhypixel", true))
                 mc.netHandler.addToSendQueue(C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos(1.0, 1.0, 1.0), EnumFacing.DOWN))
+            else if (autoBlockModeValue.get().equals("UpdatedNCP", true)) {
+                if (uncpSwitchSlot.get()) {
+                    val currentItem = mc.thePlayer.inventory.currentItem
+                    mc.thePlayer.inventory.currentItem = (currentItem + 1) % 9
+                    mc.thePlayer.inventory.currentItem = currentItem
+                }
+                mc.netHandler.addToSendQueue(C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN))
+            }
             else
                 mc.netHandler.addToSendQueue(C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN))
             

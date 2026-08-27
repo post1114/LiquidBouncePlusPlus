@@ -40,6 +40,9 @@ public class Speed extends Module {
             new SNCPBHop(),
             new NCPHop(),
             new NCPYPort(),
+            new UNCPHop(),
+            new UNCPHop2(),
+            new UNCPLowHop(),
 
             // AAC
             new AAC4Hop(),
@@ -106,7 +109,7 @@ public class Speed extends Module {
         }
     };
 
-    public final ListValue ncpModeValue = new ListValue("NCP-Mode", new String[]{"BHop", "FHop", "SBHop", "Hop", "YPort"}, "BHop", () -> { return typeValue.get().equalsIgnoreCase("ncp"); }) {
+    public final ListValue ncpModeValue = new ListValue("NCP-Mode", new String[]{"BHop", "FHop", "SBHop", "Hop", "YPort", "UNCPHop", "UNCPHop2", "UNCPLowHop"}, "BHop", () -> { return typeValue.get().equalsIgnoreCase("ncp"); }) {
 
         @Override
         protected void onChange(final String oldValue, final String newValue) {
@@ -356,6 +359,9 @@ public class Speed extends Module {
         switch (typeValue.get()) {
             case "NCP":
             if (ncpModeValue.get().equalsIgnoreCase("SBHop")) mode = "SNCPBHop";
+            else if (ncpModeValue.get().equalsIgnoreCase("UNCPHop")) mode = "UNCPHop";
+            else if (ncpModeValue.get().equalsIgnoreCase("UNCPHop2")) mode = "UNCPHop2";
+            else if (ncpModeValue.get().equalsIgnoreCase("UNCPLowHop")) mode = "UNCPLowHop";
             else mode = "NCP" + ncpModeValue.get();
             break;
             case "AAC":
