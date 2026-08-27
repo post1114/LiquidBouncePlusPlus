@@ -43,6 +43,7 @@ public class ClickGui extends GuiScreen {
     private Panel clickedPanel;
     private int mouseX;
     private int mouseY;
+    private int scrollY = 0;
 
     public double slide, progress = 0;
 
@@ -287,7 +288,10 @@ public class ClickGui extends GuiScreen {
 
         for (final Panel panel : panels) {
             panel.updateFade(RenderUtils.deltaTime);
+            int originalY = panel.y;
+            panel.y += scrollY;
             panel.drawScreen(mouseX, mouseY, partialTicks);
+            panel.y = originalY;
         }
 
         for (final Panel panel : panels) {
@@ -304,9 +308,37 @@ public class ClickGui extends GuiScreen {
         if (Mouse.hasWheel()) {
             int wheel = Mouse.getDWheel();
 
-            for (int i = panels.size() - 1; i >= 0; i--)
-                if (panels.get(i).handleScroll(mouseX, mouseY, wheel))
-                    break;
+            boolean handled = false;
+            for (int i = panels.size() - 1; i >= 0; i--) {
+                Panel panel = panels.get(i);
+                int adjustedY = panel.getY() + scrollY;
+                if (mouseX >= panel.getX() && mouseX <= panel.getX() + panel.getWidth()
+                    && mouseY >= adjustedY && mouseY <= adjustedY + 19 + panel.getElementsHeight()) {
+                    if (panels.get(i).handleScroll(mouseX, mouseY - scrollY, wheel)) {
+                        handled = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!handled) {
+                scrollY += wheel > 0 ? 20 : -20;
+                int minY = Integer.MAX_VALUE;
+                for (Panel panel : panels) {
+                    if (panel.getY() + scrollY < minY)
+                        minY = panel.getY() + scrollY;
+                }
+                if (minY > 10)
+                    scrollY = 10 - (minY - scrollY);
+                int maxY = 0;
+                for (Panel panel : panels) {
+                    int panelBottom = panel.getY() + scrollY + 20 + panel.getElementsHeight();
+                    if (panelBottom > maxY)
+                        maxY = panelBottom;
+                }
+                if (maxY < height - 10)
+                    scrollY += (height - 10) - maxY;
+            }
         }
 
         GlStateManager.disableLighting();
@@ -342,17 +374,19 @@ public class ClickGui extends GuiScreen {
         mouseY /= scale;
 
         for (final Panel panel : panels) {
-            panel.mouseClicked(mouseX, mouseY, mouseButton);
+            int adjustedY = panel.getY() + scrollY;
+            panel.mouseClicked(mouseX, mouseY - scrollY, mouseButton);
 
             panel.drag = false;
 
-            if (mouseButton == 0 && panel.isHovering(mouseX, mouseY))
+            if (mouseButton == 0 && mouseX >= panel.getX() && mouseX <= panel.getX() + panel.getWidth()
+                && mouseY >= adjustedY && mouseY <= adjustedY + panel.getHeight())
                 clickedPanel = panel;
         }
 
         if (clickedPanel != null) {
             clickedPanel.x2 = clickedPanel.x - mouseX;
-            clickedPanel.y2 = clickedPanel.y - mouseY;
+            clickedPanel.y2 = clickedPanel.getY() + scrollY - mouseY;
             clickedPanel.drag = true;
 
             panels.remove(clickedPanel);
