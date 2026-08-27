@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-11-arm
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
@@ -21,7 +21,7 @@ jobs:
       uses: actions/setup-java@v5
       with:
         java-version: '8'
-        distribution: 'zulu'
+        distribution: 'temurin'
 
     - name: Build with Gradle
       run: .\gradlew.bat build
